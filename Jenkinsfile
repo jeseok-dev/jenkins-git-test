@@ -1,42 +1,32 @@
 pipeline {
     agent any
-    environment {
-        // Docker 이미지의 이름과 태그 정의
-        DOCKER_IMAGE = 'my-docker-app'
-        DOCKER_TAG = "v${env.BUILD_NUMBER}" // Jenkins 빌드 번호를 태그로 사용
-    }
+
     stages {
+        stage('1. Checkout Code') {
+            steps {
+                // Git SCM 설정에 따라 Jenkins가 자동으로 코드를 가져옵니다.
+                echo 'Git 저장소에서 소스 코드 Checkout 완료.'
+            }
+        }
+
+        stage('2. Verify Files') {
+            steps {
+                echo '=== 파일 존재 및 내용 확인 ==='
+                
+                // [방법 1] 'version.txt' 파일의 내용을 직접 읽어와 출력
+                sh 'echo "Version read from file: $(cat version.txt)"'
+                
+                // [방법 2] 'app.py' 파일이 실제로 존재하는지 목록 확인
+                sh 'ls -l app.py'
+            }
+        }
         
-        stage('Build & Test') {
+        stage('3. Show Environment') {
             steps {
-                echo '=== 애플리케이션 빌드 및 테스트 ==='
-                // 프로젝트 빌드 명령어 실행 (예: mvn clean package)
-            }
-        }
-        stage('Docker Build') {
-            steps {
-                echo '=== Docker 이미지 빌드 ==='
-                script {
-                    // Dockerfile을 사용하여 이미지 빌드
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", '.') 
-                }
-            }
-        }
-        stage('Docker Deploy') {
-            steps {
-                echo '=== Docker 컨테이너 배포 ==='
-                script {
-                    // 이전 컨테이너 정지 및 삭제 (선택적)
-                    sh "docker stop ${DOCKER_IMAGE} || true"
-                    sh "docker rm ${DOCKER_IMAGE} || true"
-                    
-                    // 새 이미지로 컨테이너 실행 (8080 포트와 80 포트를 연결)
-                    //sh "docker run -d --name ${DOCKER_IMAGE} -p 80:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}"
- 
-                     sh "docker run --name ${DOCKER_IMAGE} ${DOCKER_IMAGE}:${DOCKER_TAG}"
-               }
+                echo '=== 현재 Git 정보 출력 ==='
+                // Jenkins가 가져온 현재 Git 커밋 ID 출력
+                sh 'echo "Current Git Commit: ${GIT_COMMIT}"' 
             }
         }
     }
 }
-
